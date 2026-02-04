@@ -15,6 +15,7 @@ require_cmd() {
 
 require_cmd docker
 require_cmd dotnet
+require_cmd openssl
 
 if [[ ! -f "$ENV_FILE" ]]; then
   if [[ -f "$ENV_EXAMPLE" ]]; then
@@ -51,22 +52,26 @@ read -r -s -p "SA_PASSWORD: " new_pw
 echo
 
 if [[ -n "$new_pw" ]]; then
-  python3 - <<PY
-from pathlib import Path
-env_path = Path(r"$ENV_FILE")
-lines = env_path.read_text(encoding="utf-8").splitlines()
-updated = []
-found = False
-for line in lines:
-    if line.startswith("SA_PASSWORD="):
-        updated.append("SA_PASSWORD=" + r"$new_pw")
-        found = True
-    else:
-        updated.append(line)
-if not found:
-    updated.insert(0, "SA_PASSWORD=" + r"$new_pw")
-env_path.write_text("\n".join(updated) + "\n", encoding="utf-8")
-PY
+  tmp_file=$(mktemp)
+  found=0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" == SA_PASSWORD=* ]]; then
+      printf 'SA_PASSWORD=%s\n' "$new_pw" >>"$tmp_file"
+      found=1
+    else
+      printf '%s\n' "$line" >>"$tmp_file"
+    fi
+  done <"$ENV_FILE"
+
+  if [[ "$found" -eq 0 ]]; then
+    {
+      printf 'SA_PASSWORD=%s\n' "$new_pw"
+      cat "$tmp_file"
+    } >"$tmp_file.new"
+    mv "$tmp_file.new" "$tmp_file"
+  fi
+
+  mv "$tmp_file" "$ENV_FILE"
   echo "Updated SA_PASSWORD in .env"
 else
   echo "Kept existing SA_PASSWORD"
@@ -101,3 +106,16 @@ Next commands:
   dotnet restore
   dotnet run --project src/Api/Api.csproj
 EOF
+
+echo
+echo "Ensuring a development JWT key exists (user-secrets)..."
+existing_jwt_key=$(dotnet user-secrets list --project "$API_CSPROJ" 2>/dev/null | grep -E '^Jwt:Key\s*=\s*' || true)
+if [[ -n "$existing_jwt_key" ]]; then
+  echo "Jwt:Key already set"
+else
+  dev_key=$(openssl rand -base64 48 | tr -d '\n')
+  dotnet user-secrets set --project "$API_CSPROJ" "Jwt:Key" "$dev_key" >/dev/null
+  dotnet user-secrets set --project "$API_CSPROJ" "Jwt:Issuer" "Winecellar" >/dev/null
+  dotnet user-secrets set --project "$API_CSPROJ" "Jwt:Audience" "Winecellar" >/dev/null
+  echo "Jwt:Key set (dev-only)"
+fi

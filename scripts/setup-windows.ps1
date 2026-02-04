@@ -101,3 +101,18 @@ Write-Host ''
 Write-Host 'Next commands:'
 Write-Host '  dotnet restore'
 Write-Host '  dotnet run --project src/Api/Api.csproj'
+
+Write-Host ''
+Write-Host 'Ensuring a development JWT key exists (user-secrets)...'
+$secrets = (dotnet user-secrets list --project $ApiCsproj 2>$null)
+if ($secrets -match '^Jwt:Key\s*=') {
+  Write-Host 'Jwt:Key already set'
+} else {
+  $bytes = New-Object byte[] 48
+  [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+  $devKey = [Convert]::ToBase64String($bytes)
+  dotnet user-secrets set --project $ApiCsproj 'Jwt:Key' $devKey | Out-Null
+  dotnet user-secrets set --project $ApiCsproj 'Jwt:Issuer' 'Winecellar' | Out-Null
+  dotnet user-secrets set --project $ApiCsproj 'Jwt:Audience' 'Winecellar' | Out-Null
+  Write-Host 'Jwt:Key set (dev-only)'
+}

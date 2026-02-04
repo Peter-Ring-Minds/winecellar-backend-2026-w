@@ -5,6 +5,15 @@ This repo is intentionally set up so that:
 - The **database runs in Docker**
 - The **API runs locally**
 
+## Quick start (run the project)
+
+After you’ve run one of the setup scripts (or manually set `SA_PASSWORD` + user-secrets), you can run the project with:
+
+```bash
+docker compose up -d
+dotnet run --project src/Api/Api.csproj
+```
+
 ## Prereqs
 
 - Docker Desktop (Windows/macOS)
@@ -57,6 +66,38 @@ dotnet run --project src/Api/Api.csproj
 
 Swagger should be available when running in Development.
 
+## Authentication (JWT)
+
+This backend uses JWT bearer authentication.
+
+- You must set a signing key `Jwt:Key` (user-secrets recommended).
+- The setup scripts configure this automatically.
+
+Note: `Jwt:Key` must be at least 32 bytes for HS256.
+
+Set manually (dev only):
+
+```bash
+dotnet user-secrets set --project src/Api/Api.csproj "Jwt:Key" "YOUR_DEV_SIGNING_KEY"
+dotnet user-secrets set --project src/Api/Api.csproj "Jwt:Issuer" "Winecellar"
+dotnet user-secrets set --project src/Api/Api.csproj "Jwt:Audience" "Winecellar"
+```
+
+Auth endpoints:
+
+- `POST /auth/register` → returns `{ accessToken }`
+- `POST /auth/login` → returns `{ accessToken }`
+
+Use the token in Swagger via `Authorize` → `Bearer {token}`.
+
+## Data structure
+
+The domain model is structured as:
+
+`Cellar` → `StorageUnit` → `Wine`
+
+Entitlements are enforced by membership: users only see cellars (and nested storage units/wines) they are members of.
+
 ## Connection string
 
 For training purposes, we do **not** commit DB passwords.
@@ -108,3 +149,10 @@ To remove DB data too:
 ```bash
 docker compose down -v
 ```
+
+## Troubleshooting
+
+- SQL Server won’t start / container is unhealthy: `SA_PASSWORD` must satisfy SQL Server’s password policy (uppercase + lowercase + number + symbol, 8+ chars).
+- You changed `SA_PASSWORD` but login fails: the DB volume keeps the old password. Reset with `docker compose down -v` and start again.
+- API fails on startup about `ConnectionStrings:Default`: set it with `dotnet user-secrets set --project src/Api/Api.csproj "ConnectionStrings:Default" "..."`.
+- API fails on startup about `Jwt:Key`: set a 32+ byte key with `dotnet user-secrets set --project src/Api/Api.csproj "Jwt:Key" "..."` (setup scripts do this automatically).

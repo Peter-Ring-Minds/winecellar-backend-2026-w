@@ -14,6 +14,8 @@ docker compose up -d
 dotnet run --project src/Api/Api.csproj
 ```
 
+Intern guide: see `docs/dotnet-basics.md` for how to add models/migrations, create controllers, and protect endpoints.
+
 ## Prereqs
 
 - Docker Desktop (Windows/macOS)

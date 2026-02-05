@@ -2,7 +2,7 @@
 
 This repo is intentionally set up so that:
 
-- The **database runs in Docker**
+- The **database runs in podman**
 - The **API runs locally**
 
 ## Quick start (run the project)
@@ -10,16 +10,16 @@ This repo is intentionally set up so that:
 After you’ve run one of the setup scripts (or manually set `SA_PASSWORD` + user-secrets), you can run the project with:
 
 ```bash
-docker compose up -d
+podman compose up -d
 dotnet run --project src/Api/Api.csproj
 ```
 
 ## Prereqs
 
-- Docker Desktop (Windows/macOS)
+- podman Desktop (Windows/macOS)
 - .NET SDK (the project targets .NET 10)
 
-## Start the database (Docker)
+## Start the database (podman)
 
 From the repo root:
 
@@ -49,7 +49,7 @@ cp .env.example .env
 Edit `.env` and set `SA_PASSWORD`.
 
 ```bash
-docker compose up -d
+podman compose up -d
 ```
 
 SQL Server will be available on `localhost:1433`.
@@ -59,6 +59,8 @@ SQL Server will be available on `localhost:1433`.
 ## Run the API (host)
 
 ```bash
+dotnet clean
+
 dotnet restore
 
 dotnet run --project src/Api/Api.csproj
@@ -141,18 +143,18 @@ $env:ConnectionStrings__Default='Server=localhost,1433;Database=WinecellarDb;Use
 ## Stop / reset
 
 ```bash
-docker compose down
+podman compose down
 ```
 
 To remove DB data too:
 
 ```bash
-docker compose down -v
+podman compose down -v
 ```
 
 ## Troubleshooting
 
 - SQL Server won’t start / container is unhealthy: `SA_PASSWORD` must satisfy SQL Server’s password policy (uppercase + lowercase + number + symbol, 8+ chars).
-- You changed `SA_PASSWORD` but login fails: the DB volume keeps the old password. Reset with `docker compose down -v` and start again.
+- You changed `SA_PASSWORD` but login fails: the DB volume keeps the old password. Reset with `podman compose down -v` and start again.
 - API fails on startup about `ConnectionStrings:Default`: set it with `dotnet user-secrets set --project src/Api/Api.csproj "ConnectionStrings:Default" "..."`.
 - API fails on startup about `Jwt:Key`: set a 32+ byte key with `dotnet user-secrets set --project src/Api/Api.csproj "Jwt:Key" "..."` (setup scripts do this automatically).

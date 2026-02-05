@@ -13,7 +13,7 @@ require_cmd() {
   fi
 }
 
-require_cmd docker
+require_cmd podman
 require_cmd dotnet
 require_cmd openssl
 
@@ -92,17 +92,18 @@ dotnet user-secrets set --project "$API_CSPROJ" "ConnectionStrings:Default" "$co
 echo "User-secrets configured for src/Api/Api.csproj"
 
 echo
-read -r -p "Start the database now with 'docker compose up -d'? [y/N] " start_db
+read -r -p "Start the database now with 'podman compose up -d'? [y/N] " start_db
 if [[ "$start_db" =~ ^[Yy]$ ]]; then
-  (cd "$ROOT_DIR" && docker compose up -d)
+  (cd "$ROOT_DIR" && podman compose up -d)
   echo "DB started. SQL Server is on localhost:1433"
 else
-  echo "Skipping DB start. You can run: docker compose up -d"
+  echo "Skipping DB start. You can run: podman compose up -d"
 fi
 
 echo
 cat <<EOF
 Next commands:
+  dotnet clean
   dotnet restore
   dotnet run --project src/Api/Api.csproj
 EOF

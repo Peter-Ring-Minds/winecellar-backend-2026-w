@@ -8,4 +8,8 @@ public class Wine
     public string Type { get; set; } = string.Empty;
     public int Vintage { get; set; }
 
+    // Foreign key to StorageUnit
+    public Guid? StorageUnitId { get; set; }
+    public StorageUnit? StorageUnit { get; set; }
+
 }

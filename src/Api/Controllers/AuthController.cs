@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
+// This controller handles user registration, login, and fetching the current user's info. It uses ASP.NET Core Identity for user management and a custom JWT token service for authentication.
 [ApiController]
 [Route("auth")]
 public class AuthController : ControllerBase

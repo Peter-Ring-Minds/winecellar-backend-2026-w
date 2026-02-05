@@ -21,8 +21,8 @@ public class CellarController : ControllerBase
         _userManager = userManager;
     }
     
-  [HttpPost("add-item")]
-    public async Task<ActionResult> AddItem(AddCellarItemRequest request)
+  [HttpPost("add-wine")]
+    public async Task<ActionResult> AddWine(AddCellarItemRequest request)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user is null)
@@ -31,6 +31,10 @@ public class CellarController : ControllerBase
         }
 
         return Ok();
+
+        // ToDo: Implement adding a wine to a cellar's storage unit
+
+        
     }
 
 }

@@ -20,6 +20,17 @@ public class CellarController : ControllerBase
     {
         _userManager = userManager;
     }
+    
+  [HttpPost("add-item")]
+    public async Task<ActionResult> AddItem(AddCellarItemRequest request)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
 
+        return Ok();
+    }
 
 }

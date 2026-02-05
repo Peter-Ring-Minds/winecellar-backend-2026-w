@@ -1,23 +1,30 @@
 using Api.Auth;
 using Api.Contracts.Auth;
 using Api.Contracts.Cellar;
+using Api.Contracts.Cellars;
+using Domain;
+using Infrastructure;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Api.Controllers;
 
 
-[ApiController] 
 [Route("api/[controller]")]
+[ApiController] 
+
 [Authorize]
 public class CellarController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
-
-    public CellarController(UserManager<ApplicationUser> userManager)
+    private readonly AppDbContext _context;
+    public CellarController(UserManager<ApplicationUser> userManager, AppDbContext dbContext)
     {
+        _context = dbContext;
         _userManager = userManager;
     }
     
@@ -31,10 +38,24 @@ public class CellarController : ControllerBase
         }
 
         return Ok();
-
-        // ToDo: Implement adding a wine to a cellar's storage unit
-
-        
     }
+
+        //Get: api/Cellars
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<CellarSummary>>> GetAllCellars()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        
+        /*if (user is null)
+                {
+            return Unauthorized();
+        }*/
+    return await _context.Cellars
+        .Where(c => c.UserId == user.Id)
+        .Select(c => new CellarSummary(c))
+        .ToListAsync();
+
+    }
+
 
 }

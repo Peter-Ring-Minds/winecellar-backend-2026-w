@@ -10,7 +10,7 @@ function Require-Command($name) {
   }
 }
 
-Require-Command docker
+Require-Command podman
 Require-Command dotnet
 
 $RootDir = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -89,11 +89,11 @@ Write-Host 'User-secrets configured for src/Api/Api.csproj'
 
 if ($StartDb) {
   Push-Location $RootDir
-  docker compose up -d
+  podman compose up -d
   Pop-Location
   Write-Host 'DB started. SQL Server is on localhost:1433'
 } else {
-  Write-Host "Skipping DB start. Run: docker compose up -d"
+  Write-Host "Skipping DB start. Run: podman compose up -d"
   Write-Host "Or re-run with: .\scripts\setup-windows.ps1 -StartDb"
 }
 

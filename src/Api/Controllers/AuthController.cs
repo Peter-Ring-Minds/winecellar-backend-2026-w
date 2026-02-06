@@ -4,6 +4,7 @@ using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Api.Controllers;
 
@@ -55,13 +56,13 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
         {
-            return Unauthorized();
+            return Unauthorized(new { Error = "invalid_credentials" });
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
         if (!result.Succeeded)
         {
-            return Unauthorized();
+            return Unauthorized(new { Error = "invalid_credentials" });
         }
 
         var token = _tokenService.CreateToken(user);
@@ -74,7 +75,7 @@ public class AuthController : ControllerBase
     {
         return Ok(new
         {
-            UserId = User.FindFirst("sub")?.Value,
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
             Name = User.Identity?.Name
         });
     }

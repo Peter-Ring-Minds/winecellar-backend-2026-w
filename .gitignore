@@ -41,6 +41,7 @@ bld/
 
 # Catch potential weird build folders from .NET 10 SDK on macOS
 **/[\\]Debug/
+**\Debug
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

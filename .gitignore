@@ -41,6 +41,7 @@ bld/
 
 # Catch potential weird build folders from .NET 10 SDK on macOS
 **/[\\]Debug/
+**\Debug
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -488,3 +489,8 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 mise.toml
+
+#Added .Net build folders to gitignore
+bin/
+obj/
+.vs/

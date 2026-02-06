@@ -488,3 +488,8 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 mise.toml
+
+#Added .Net build folders to gitignore
+bin/
+obj/
+.vs/

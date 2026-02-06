@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,16 +23,14 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+        Description = "Paste the raw JWT here (no 'Bearer ' prefix). Swagger UI will send it as: Authorization: Bearer {token}"
     };
 
     options.AddSecurityDefinition("Bearer", scheme);
 
-    var schemeReference = new OpenApiSecuritySchemeReference("Bearer", hostDocument: null!, externalResource: null);
-
-    options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        { schemeReference, new List<string>() }
+        { new OpenApiSecuritySchemeReference("Bearer", hostDocument: document, externalResource: null), new List<string>() }
     });
 });
 
@@ -69,6 +68,43 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.IncludeErrorDetails = builder.Environment.IsDevelopment();
+
+        if (builder.Environment.IsDevelopment())
+        {
+            options.Events = new JwtBearerEvents
+            {
+                OnChallenge = context =>
+                {
+                    // Default challenge gives very little information when the header is missing.
+                    // In Development, return a small JSON payload to make debugging Swagger/auth easier.
+                    var authHeader = context.Request.Headers.Authorization.ToString();
+                    var hasBearer = !string.IsNullOrWhiteSpace(authHeader);
+
+                    var error = context.Error;
+                    var errorDescription = context.ErrorDescription;
+
+                    if (!hasBearer)
+                    {
+                        error ??= "missing_authorization";
+                        errorDescription ??= "No Authorization header was sent. In Swagger, click Authorize and paste the raw JWT (no 'Bearer ' prefix).";
+                    }
+
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    var payload = new
+                    {
+                        error,
+                        error_description = errorDescription
+                    };
+
+                    return context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+                }
+            };
+        }
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -101,7 +137,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.EnablePersistAuthorization();
+    });
 }
 
 app.UseAuthentication();

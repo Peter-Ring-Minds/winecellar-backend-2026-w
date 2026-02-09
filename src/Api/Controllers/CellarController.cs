@@ -109,6 +109,30 @@ public class CellarController : ControllerBase
         return NoContent();
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCellar(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var cellar = await _context.Cellars
+            .Where(x => x.CellarId == id && x.UserId == userId)
+            .FirstOrDefaultAsync();
+        try
+        {
+            if (cellar is null)
+            {
+                return NotFound();
+            }
+             _context.Cellars.Remove(cellar);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException) when (CellarExists(id))
+        {
+            return NotFound("The cellar wasn't deleted. Consult a developer. Or a wizard");
+        }
+
+        return NoContent();    
+    }    
+
 
 
     //Helper method to get the current user's ID from Claims

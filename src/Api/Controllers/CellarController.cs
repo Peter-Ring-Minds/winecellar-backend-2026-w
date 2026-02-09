@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Domain;
 using System.Security.Claims;
 
 namespace Api.Controllers;

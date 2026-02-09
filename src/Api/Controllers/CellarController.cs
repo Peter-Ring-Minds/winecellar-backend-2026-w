@@ -51,8 +51,9 @@ public class CellarController : ControllerBase
     [HttpGet("GetCellars")]
     public async Task<ActionResult<IEnumerable<CellarContract>>> GetCellars()
     {
+        var userId = GetCurrentUserId();
         var allUserCellars = await _context.Cellars
-            .Where(x => x.UserId.ToString() == User.FindFirstValue(ClaimTypes.NameIdentifier))
+            .Where(x => x.UserId == userId)
             .Select(x => new CellarContract(x.CellarId, x.UserId))
             .ToListAsync();
         if (allUserCellars is null || !allUserCellars.Any())
@@ -65,9 +66,9 @@ public class CellarController : ControllerBase
         [HttpGet("GetCellar/{id}")]
     public async Task<ActionResult<CellarContract>> GetCellar(Guid id)
     {
-
+        var userId = GetCurrentUserId();
         var cellar = await _context.Cellars
-            .Where(x => x.CellarId == id && x.UserId.ToString() == User.FindFirstValue(ClaimTypes.NameIdentifier))
+            .Where(x => x.CellarId == id && x.UserId == userId)
             .FirstOrDefaultAsync();
         if (cellar is null)
         {
@@ -76,4 +77,16 @@ public class CellarController : ControllerBase
         return Ok(new CellarContract(cellar.CellarId, cellar.UserId));
     }
 
+
+
+    //Helper method to get the current user's ID from Claims
+    private Guid GetCurrentUserId()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out Guid userId))
+        {
+            throw new InvalidOperationException("Invalid or missing user ID in claims.");
+        }
+        return userId;
+    }
 }

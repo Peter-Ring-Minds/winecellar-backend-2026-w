@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Domain;
+using System.Security.Claims;
 
 namespace Api.Controllers;
 
@@ -27,14 +29,8 @@ public class CellarController : ControllerBase
 
 
     [HttpPost]
-    public async Task<ActionResult<CellarContract>> PostTodoItem(CellarContract cellarContract)
+    public async Task<ActionResult<CellarContract>> PostCellar(CellarContract cellarContract)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
         var cellar = new Domain.Cellar
         {
             CellarId = cellarContract.CellarId,
@@ -55,13 +51,8 @@ public class CellarController : ControllerBase
     [HttpGet("GetCellars")]
     public async Task<ActionResult<IEnumerable<CellarContract>>> GetCellars()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
             return await _context.Cellars
+            .Where(x => x.UserId.ToString() == User.FindFirstValue(ClaimTypes.NameIdentifier))
             .Select(x => new CellarContract(x.CellarId, x.UserId))
             .ToListAsync();
     }
@@ -69,11 +60,10 @@ public class CellarController : ControllerBase
         [HttpGet("GetCellar/{id}")]
     public async Task<ActionResult<CellarContract>> GetCellar(Guid id)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user is null)        {
-            return Unauthorized();
-        }
-        var cellar = await _context.Cellars.FindAsync(id);
+
+        var cellar = await _context.Cellars
+            .Where(x => x.CellarId == id && x.UserId.ToString() == User.FindFirstValue(ClaimTypes.NameIdentifier))
+            .FirstOrDefaultAsync();
         if (cellar is null)
         {
             return NotFound();

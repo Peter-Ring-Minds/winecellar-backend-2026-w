@@ -1,10 +1,13 @@
-using Api.Auth;
-using Api.Contracts.Auth;
 using Api.Contracts.Cellar;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Domain;
+using System.Security.Claims;
 
 namespace Api.Controllers;
 
@@ -15,26 +18,75 @@ namespace Api.Controllers;
 public class CellarController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly AppDbContext _context;
 
-    public CellarController(UserManager<ApplicationUser> userManager)
+    public CellarController(UserManager<ApplicationUser> userManager, AppDbContext context)
     {
+        _context = context;
         _userManager = userManager;
     }
     
-  [HttpPost("add-wine")]
-    public async Task<ActionResult> AddWine(AddCellarItemRequest request)
+
+
+    [HttpPost]
+    public async Task<ActionResult<CellarContract>> PostCellar(CellarContract cellarContract)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user is null)
+        var cellar = new Domain.Cellar
         {
-            return Unauthorized();
-        }
+            CellarId = cellarContract.CellarId,
+            UserId = cellarContract.UserId,
 
-        return Ok();
+        };
 
-        // ToDo: Implement adding a wine to a cellar's storage unit
+        _context.Cellars.Add(cellar);
+        await _context.SaveChangesAsync();
 
-        
+        return CreatedAtAction(
+            nameof(GetCellar),
+            new { id = cellar.CellarId },
+            cellarContract);
     }
 
+
+    [HttpGet("GetCellars")]
+    public async Task<ActionResult<IEnumerable<CellarContract>>> GetCellars()
+    {
+        var userId = GetCurrentUserId();
+        var allUserCellars = await _context.Cellars
+            .Where(x => x.UserId == userId)
+            .Select(x => new CellarContract(x.CellarId, x.UserId))
+            .ToListAsync();
+        if (allUserCellars is null || !allUserCellars.Any())
+        {
+            return NotFound();
+        }
+        return Ok(allUserCellars);
+    }
+
+        [HttpGet("GetCellar/{id}")]
+    public async Task<ActionResult<CellarContract>> GetCellar(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var cellar = await _context.Cellars
+            .Where(x => x.CellarId == id && x.UserId == userId)
+            .FirstOrDefaultAsync();
+        if (cellar is null)
+        {
+            return NotFound();
+        }
+        return Ok(new CellarContract(cellar.CellarId, cellar.UserId));
+    }
+
+
+
+    //Helper method to get the current user's ID from Claims
+    private Guid GetCurrentUserId()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out Guid userId))
+        {
+            throw new InvalidOperationException("Invalid or missing user ID in claims.");
+        }
+        return userId;
+    }
 }

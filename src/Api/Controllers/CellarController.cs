@@ -70,11 +70,43 @@ public class CellarController : ControllerBase
         var cellar = await _context.Cellars
             .Where(x => x.CellarId == id && x.UserId == userId)
             .FirstOrDefaultAsync();
-        if (cellar is null)
+        if (cellar is null )
         {
             return NotFound();
         }
         return Ok(new CellarContract(cellar.CellarId, cellar.UserId));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutCellar(Guid id, CellarContract cellarContract)
+    {
+        var userId = GetCurrentUserId();
+        var cellar = await _context.Cellars
+            .Where(x => x.CellarId == id && x.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (cellar is null)
+        {
+            return NotFound();
+        }
+        if (cellar.CellarId != id)
+        {
+            return BadRequest();
+        }
+        cellar.UserId = cellarContract.UserId;
+        cellar.CellarId = cellarContract.CellarId;
+
+        try
+        {
+            _context.Entry(cellar).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException) when (!CellarExists(id))
+        {
+            return NotFound();
+        }
+        
+        return NoContent();
     }
 
 
@@ -88,5 +120,11 @@ public class CellarController : ControllerBase
             throw new InvalidOperationException("Invalid or missing user ID in claims.");
         }
         return userId;
+    }
+
+    //Helper method to check if a cellar exists user
+    private bool CellarExists(Guid id)
+    {
+        return _context.Cellars.Any(e => e.CellarId == id);
     }
 }

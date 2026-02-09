@@ -51,10 +51,15 @@ public class CellarController : ControllerBase
     [HttpGet("GetCellars")]
     public async Task<ActionResult<IEnumerable<CellarContract>>> GetCellars()
     {
-            return await _context.Cellars
+        var allUserCellars = await _context.Cellars
             .Where(x => x.UserId.ToString() == User.FindFirstValue(ClaimTypes.NameIdentifier))
             .Select(x => new CellarContract(x.CellarId, x.UserId))
             .ToListAsync();
+        if (allUserCellars is null || !allUserCellars.Any())
+        {
+            return NotFound();
+        }
+        return Ok(allUserCellars);
     }
 
         [HttpGet("GetCellar/{id}")]

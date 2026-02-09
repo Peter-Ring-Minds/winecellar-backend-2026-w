@@ -25,15 +25,14 @@ public class StorageUnitController : ControllerBase
         _userManager = userManager;
     }
 
-
     [HttpPost]
-    public async Task<ActionResult<StorageUnitContract>> PostStorageUnit(StorageUnitContract storageUnitContract)
+    public async Task<ActionResult<StorageUnitContract>> PostStorageUnit(RegisterStorageUnitRequest request)
     {
         var storageUnit = new Domain.StorageUnit
         {
             StorageUnitId = Guid.NewGuid(),
-            CellarId = storageUnitContract.CellarId,
-            StorageUnitName = storageUnitContract.Name
+            CellarId = request.CellarId,
+            StorageUnitName = request.Name
         };
 
         _context.StorageUnits.Add(storageUnit);
@@ -42,7 +41,7 @@ public class StorageUnitController : ControllerBase
         return CreatedAtAction(
             nameof(GetStorageUnit),
             new { id = storageUnit.StorageUnitId },
-            storageUnitContract);
+            new StorageUnitContract(storageUnit.StorageUnitId, storageUnit.CellarId, storageUnit.StorageUnitName));
     }
 
     [HttpGet("GetStorageUnit/{id}")]
@@ -51,7 +50,6 @@ public class StorageUnitController : ControllerBase
         var storageUnit = await _context.StorageUnits
         .Where(x => x.StorageUnitId == id)
         .FirstOrDefaultAsync();
-
         if (storageUnit is null)
         {
             return NotFound();

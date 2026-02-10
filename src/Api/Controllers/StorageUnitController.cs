@@ -26,13 +26,14 @@ public class StorageUnitController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<StorageUnitContract>> PostStorageUnit(RegisterStorageUnitRequest request)
+    public async Task<ActionResult<StorageUnitContract>> PostStorageUnit(StorageUnitContract request)
     {
         var storageUnit = new Domain.StorageUnit
         {
-            StorageUnitId = Guid.NewGuid(),
+            UserId = GetCurrentUserId(),
+            Id = Guid.NewGuid(),
             CellarId = request.CellarId,
-            StorageUnitName = request.Name
+            Name = request.Name
         };
 
         _context.StorageUnits.Add(storageUnit);
@@ -40,44 +41,30 @@ public class StorageUnitController : ControllerBase
 
         return CreatedAtAction(
             nameof(GetStorageUnit),
-            new { id = storageUnit.StorageUnitId },
-            new StorageUnitContract(storageUnit.StorageUnitId, storageUnit.CellarId, storageUnit.StorageUnitName));
+            new { id = storageUnit.Id },
+            CreateStorageUnitContract(storageUnit));
     }
 
     [HttpGet]
     public async Task<ActionResult<List<StorageUnitContract>>> GetStorageUnits()
     {
+
         var userId = GetCurrentUserId();
-        var userCellars = await _context.Cellars
-            .Where(c => c.UserId == userId)
-            .Select(c => c.CellarId)
-            .ToListAsync();
-        var storageUnits = await _context.StorageUnits
-            .Where(su => userCellars.Contains(su.CellarId))
-            .Select(su => new StorageUnitContract(su.StorageUnitId, su.CellarId, su.StorageUnitName))
+        var userStorageUnits = await _context.StorageUnits
+            .Where(su => su.UserId == userId)
             .ToListAsync();
 
-        return Ok(storageUnits);
+        return Ok(userStorageUnits);
     }
-    //cellar/cellarid/storageunit/{id} Get StorageUnit by StorageUnitId and CellarId
-    //storageunit/bycellarid/
 
     //Get StorageUnits by CellarId
     [HttpGet("by-cellar-id/{cellarId}")]
     public async Task<ActionResult<List<StorageUnitContract>>> GetStorageUnitsByCellar(Guid cellarId)
     {
         var userId = GetCurrentUserId();
-        var cellar = await _context.Cellars
-            .Where(c => c.CellarId == cellarId && c.UserId == userId)
-            .FirstOrDefaultAsync();
-        if (cellar is null)        {
-            return NotFound();
-        }
         var storageUnits = await _context.StorageUnits
-            .Where(su => su.CellarId == cellarId)
-            .Select(su => new StorageUnitContract(su.StorageUnitId, su.CellarId, su.StorageUnitName))
+            .Where(su => su.CellarId == cellarId && su.UserId == userId)
             .ToListAsync();
-
         return Ok(storageUnits);
     }
 
@@ -85,16 +72,29 @@ public class StorageUnitController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<StorageUnitContract>> GetStorageUnit(Guid id)
     {
+        var userId = GetCurrentUserId();
         var storageUnit = await _context.StorageUnits
-        .Where(x => x.StorageUnitId == id)
+        .Where(x => x.Id == id && x.UserId == userId)
         .FirstOrDefaultAsync();
         if (storageUnit is null)
         {
             return NotFound();
         }
 
-        return Ok(new StorageUnitContract(storageUnit.StorageUnitId, storageUnit.CellarId, storageUnit.StorageUnitName));
+        return Ok(CreateStorageUnitContract(storageUnit));
     }       
+
+    //Helper function for building StorageUnitContract from StorageUnit
+    private StorageUnitContract CreateStorageUnitContract(Domain.StorageUnit storageUnit)
+    {
+        return new StorageUnitContract
+        {
+            StorageUnitId = storageUnit.Id,
+            CellarId = storageUnit.CellarId,
+            Name = storageUnit.Name
+        };
+    }
+
 
  
     //Helperfunction to get userId

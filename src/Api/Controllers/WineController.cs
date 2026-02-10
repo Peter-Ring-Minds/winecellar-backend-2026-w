@@ -27,16 +27,17 @@ public class WineController : ControllerBase
     }
 
     [HttpPost]
-    public  async Task<ActionResult<WineContract>> PostWine(RegisterWineRequest request)
+    public  async Task<ActionResult<WineContract>> PostWine(WineContract request)
     {
         var wine = new Domain.Wine
         {
-            WineId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             StorageUnitId = request.StorageUnitId,
             Name = request.Name,
             Wineyard = request.Wineyard,
             Type = request.Type,
-            Vintage = request.Vintage
+            Vintage = request.Vintage,
+            UserId = GetCurrentUserId()
         };
 
         _context.Wines.Add(wine);
@@ -44,25 +45,16 @@ public class WineController : ControllerBase
 
         return CreatedAtAction(
             nameof(GetWine),
-            new { id = wine.WineId },
-            new WineContract(wine.WineId, wine.StorageUnitId ?? Guid.Empty, string.Empty, wine.Name, wine.Wineyard, wine.Type, wine.Vintage));
+            new { id = wine.Id },
+            CreateWineContract(wine));
     }
 
     [HttpGet]
     public async Task<ActionResult<List<WineContract>>> GetWines()
     {
         var userId = GetCurrentUserId();
-        var userCellars = await _context.Cellars
-            .Where(c => c.UserId == userId)
-            .Select(c => c.CellarId)
-            .ToListAsync();
-        var storageUnits = await _context.StorageUnits
-            .Where(su => userCellars.Contains(su.CellarId))
-            .Select(su => su.StorageUnitId)
-            .ToListAsync();
         var wines = await _context.Wines
-            .Where(w => w.StorageUnitId != null && storageUnits.Contains(w.StorageUnitId.Value))
-            .Select(w => new WineContract(w.WineId, w.StorageUnitId ?? Guid.Empty, string.Empty, w.Name, w.Wineyard, w.Type, w.Vintage))
+            .Where(w => w.UserId == userId)
             .ToListAsync();
 
         return Ok(wines);
@@ -72,36 +64,31 @@ public class WineController : ControllerBase
     public async Task<ActionResult<WineContract>> GetWine(Guid id)
     {
         var userId = GetCurrentUserId();
-
-        var userCellars = await _context.Cellars
-            .Where(c => c.UserId == userId)
-            .Select(c => c.CellarId)
-            .ToListAsync();
-        if(userCellars is null || !userCellars.Any())
-        {
-            return NotFound("No cellars found for the user.");
-        }
-
-        var storageUnits = await _context.StorageUnits
-            .Where(su => userCellars.Contains(su.CellarId))
-            .Select(su => su.StorageUnitId)
-            .ToListAsync();
-        if(storageUnits is null || !storageUnits.Any())
-        {
-            return NotFound("No storage units found for the user's cellars.");
-        }
-
         var wine = await _context.Wines
-            .Where(w => w.WineId == id && storageUnits.Contains(w.StorageUnitId ?? Guid.Empty))
+            .Where(w => w.Id == id && w.UserId == userId)
             .FirstOrDefaultAsync();
         if (wine is null)
         {
-            return NotFound("Wine not found in the user's storage units.");
+            return NotFound("Wine not found for the current user.");
         }
-
-        return Ok(new WineContract(wine.WineId, wine.StorageUnitId ?? Guid.Empty, string.Empty, wine.Name, wine.Wineyard, wine.Type, wine.Vintage));
+        return Ok(CreateWineContract(wine));
     }
 
+
+
+    //Helper function for building WineContract from Domain.Wine
+    private WineContract CreateWineContract(Domain.Wine wine)
+    {
+        return new WineContract
+        {
+            WineId = wine.Id,
+            StorageUnitId = wine.StorageUnitId ?? Guid.Empty,
+            Name = wine.Name,
+            Wineyard = wine.Wineyard,
+            Type = wine.Type,
+            Vintage = wine.Vintage
+        };
+    }
 
     //Helperfunction to get userId
     private Guid GetCurrentUserId()

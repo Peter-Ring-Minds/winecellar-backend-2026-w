@@ -27,52 +27,51 @@ public class CellarController : ControllerBase
 
 
     [HttpPost]
-    public async Task<ActionResult<CellarContract>> PostCellar(CellarContract cellarContract)
+    public async Task<ActionResult<CellarContract>> PostCellar( CellarContract cellarContract)
     {
         var cellar = new Domain.Cellar
         {
-            CellarId = cellarContract.CellarId,
-            UserId = cellarContract.UserId,
+            Id = Guid.NewGuid(),
+            UserId = GetCurrentUserId(),
+            Name = cellarContract.Name 
 
         };
 
         _context.Cellars.Add(cellar);
         await _context.SaveChangesAsync();
-
         return CreatedAtAction(
             nameof(GetCellar),
-            new { id = cellar.CellarId },
-            cellarContract);
+            new { id = cellar.Id },
+            CreateCellarResponse(cellar));
     }
 
 
-    [HttpGet("GetCellars")]
-    public async Task<ActionResult<IEnumerable<CellarContract>>> GetCellars()
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<CellarResponse>>> GetCellars()
     {
         var userId = GetCurrentUserId();
         var allUserCellars = await _context.Cellars
             .Where(x => x.UserId == userId)
-            .Select(x => new CellarContract(x.CellarId, x.UserId))
             .ToListAsync();
         if (allUserCellars is null || !allUserCellars.Any())
         {
             return NotFound();
         }
-        return Ok(allUserCellars);
+        return Ok(allUserCellars.Select(cellar => CreateCellarResponse(cellar)));
     }
 
-        [HttpGet("GetCellar/{id}")]
-    public async Task<ActionResult<CellarContract>> GetCellar(Guid id)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<CellarResponse>> GetCellar(Guid id)
     {
         var userId = GetCurrentUserId();
         var cellar = await _context.Cellars
-            .Where(x => x.CellarId == id && x.UserId == userId)
+            .Where(x => x.Id == id && x.UserId == userId)
             .FirstOrDefaultAsync();
         if (cellar is null )
         {
             return NotFound();
         }
-        return Ok(new CellarContract(cellar.CellarId, cellar.UserId));
+        return Ok(CreateCellarResponse(cellar));
     }
 
     [HttpPut("{id}")]
@@ -80,19 +79,18 @@ public class CellarController : ControllerBase
     {
         var userId = GetCurrentUserId();
         var cellar = await _context.Cellars
-            .Where(x => x.CellarId == id && x.UserId == userId)
+            .Where(x => x.Id == id && x.UserId == userId)
             .FirstOrDefaultAsync();
 
         if (cellar is null)
         {
             return NotFound();
         }
-        if (cellar.CellarId != id)
+        if (cellar.Id != id)
         {
             return BadRequest();
         }
-        cellar.UserId = cellarContract.UserId;
-        cellar.CellarId = cellarContract.CellarId;
+        cellar.Name = cellarContract.Name;
 
         try
         {
@@ -112,7 +110,7 @@ public class CellarController : ControllerBase
     {
         var userId = GetCurrentUserId();
         var cellar = await _context.Cellars
-            .Where(x => x.CellarId == id && x.UserId == userId)
+            .Where(x => x.Id == id && x.UserId == userId)
             .FirstOrDefaultAsync();
         try
         {
@@ -147,6 +145,16 @@ public class CellarController : ControllerBase
     //Helper method to check if a cellar exists user
     private bool CellarExists(Guid id)
     {
-        return _context.Cellars.Any(e => e.CellarId == id);
+        return _context.Cellars.Any(e => e.Id == id);
+    }
+
+        //Helper method for builting the CellarResponse from a Domain.Cellar
+    private CellarResponse CreateCellarResponse(Domain.Cellar cellar)
+    {        return new CellarResponse
+        {
+            CellarId = cellar.Id,
+            UserId = cellar.UserId,
+            Name = cellar.Name
+        };
     }
 }

@@ -1,3 +1,11 @@
 namespace Api.Contracts.Wine;
 
-public record WineContract(Guid WineId, Guid StorageUnitId, string StorageUnitName, string Name, string Wineyard, string Type, int Vintage);
+
+public class WineContract : BaseContract
+{
+    public Guid WineId { get; set; }
+    public Guid StorageUnitId { get; set; }
+    public string Wineyard { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public int Vintage { get; set; }
+}

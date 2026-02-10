@@ -102,6 +102,35 @@ public class WineController : ControllerBase
         return Ok(new WineContract(wine.WineId, wine.StorageUnitId ?? Guid.Empty, string.Empty, wine.Name, wine.Wineyard, wine.Type, wine.Vintage));
     }
 
+    [HttpGet("by-storage-unit/{storageUnitId}")]
+    public async Task<ActionResult<List<WineContract>>> GetWinesByStorageUnit(Guid storageUnitId)
+    {
+        var userId = GetCurrentUserId();
+
+        var userCellars = await _context.Cellars
+            .Where(c => c.UserId == userId)
+            .Select(c => c.CellarId)
+            .ToListAsync();
+        if (userCellars is null || !userCellars.Any())
+        {
+            return NotFound("No cellars found for the user.");
+        }
+        var storageUnit = await _context.StorageUnits
+            .Where(su => su.StorageUnitId == storageUnitId && userCellars.Contains(su.CellarId))
+            .FirstOrDefaultAsync();
+        if (storageUnit is null)
+        {
+            return NotFound("Storage unit does not belong to the user.");
+        }
+
+        var wines = await _context.Wines
+            .Where(w => w.StorageUnitId == storageUnitId)
+            .Select(w => new WineContract(w.WineId, w.StorageUnitId ?? Guid.Empty, string.Empty, w.Name, w.Wineyard, w.Type, w.Vintage))
+            .ToListAsync();
+
+        return Ok(wines);
+    }
+
 
     //Helperfunction to get userId
     private Guid GetCurrentUserId()

@@ -60,6 +60,26 @@ public class StorageUnitController : ControllerBase
         return Ok(storageUnits);
     }
 
+    //Get StorageUnits by CellarId
+    [HttpGet("GetStorageUnitsByCellar/{cellarId}")]
+    public async Task<ActionResult<List<StorageUnitContract>>> GetStorageUnitsByCellar(Guid cellarId)
+    {
+        var userId = GetCurrentUserId();
+        var cellar = await _context.Cellars
+            .Where(c => c.CellarId == cellarId && c.UserId == userId)
+            .FirstOrDefaultAsync();
+        if (cellar is null)        {
+            return NotFound();
+        }
+        var storageUnits = await _context.StorageUnits
+            .Where(su => su.CellarId == cellarId)
+            .Select(su => new StorageUnitContract(su.StorageUnitId, su.CellarId, su.StorageUnitName))
+            .ToListAsync();
+
+        return Ok(storageUnits);
+    }
+
+    //Get StorageUnit by StorageUnitId
     [HttpGet("GetStorageUnit/{id}")]
     public async Task<ActionResult<StorageUnitContract>> GetStorageUnit(Guid id)
     {

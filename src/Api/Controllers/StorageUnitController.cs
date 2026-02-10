@@ -59,9 +59,11 @@ public class StorageUnitController : ControllerBase
 
         return Ok(storageUnits);
     }
+    //cellar/cellarid/storageunit/{id} Get StorageUnit by StorageUnitId and CellarId
+    //storageunit/bycellarid/
 
     //Get StorageUnits by CellarId
-    [HttpGet("GetStorageUnitsByCellar/{cellarId}")]
+    [HttpGet("by-cellar-id/{cellarId}")]
     public async Task<ActionResult<List<StorageUnitContract>>> GetStorageUnitsByCellar(Guid cellarId)
     {
         var userId = GetCurrentUserId();
@@ -80,7 +82,7 @@ public class StorageUnitController : ControllerBase
     }
 
     //Get StorageUnit by StorageUnitId
-    [HttpGet("GetStorageUnit/{id}")]
+    [HttpGet("{id}")]
     public async Task<ActionResult<StorageUnitContract>> GetStorageUnit(Guid id)
     {
         var storageUnit = await _context.StorageUnits

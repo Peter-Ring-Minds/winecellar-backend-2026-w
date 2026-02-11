@@ -75,7 +75,7 @@ public class WineController : ControllerBase
     }
 
     //get wines by StorageUnitId
-    [HttpGet("by-storage-unit-id/{storageUnitId}")]
+    [HttpGet("by-storage-unit/{storageUnitId}")]
     public async Task<ActionResult<List<WineResponse>>> GetWinesByStorageUnitId(Guid storageUnitId)
     {
         var userId = GetCurrentUserId();

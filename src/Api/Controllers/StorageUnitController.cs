@@ -42,11 +42,11 @@ public class StorageUnitController : ControllerBase
         return CreatedAtAction(
             nameof(GetStorageUnit),
             new { id = storageUnit.Id },
-            CreateStorageUnitContract(storageUnit));
+            CreateStorageUnitResponse(storageUnit));
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<StorageUnitContract>>> GetStorageUnits()
+    public async Task<ActionResult<List<StorageUnitResponse>>> GetStorageUnits()
     {
 
         var userId = GetCurrentUserId();
@@ -54,23 +54,23 @@ public class StorageUnitController : ControllerBase
             .Where(su => su.UserId == userId)
             .ToListAsync();
 
-        return Ok(userStorageUnits);
+        return Ok(userStorageUnits.Select(su => CreateStorageUnitResponse(su)));
     }
 
     //Get StorageUnits by CellarId
     [HttpGet("by-cellar-id/{cellarId}")]
-    public async Task<ActionResult<List<StorageUnitContract>>> GetStorageUnitsByCellar(Guid cellarId)
+    public async Task<ActionResult<List<StorageUnitResponse>>> GetStorageUnitsByCellar(Guid cellarId)
     {
         var userId = GetCurrentUserId();
         var storageUnits = await _context.StorageUnits
             .Where(su => su.CellarId == cellarId && su.UserId == userId)
             .ToListAsync();
-        return Ok(storageUnits);
+        return Ok(storageUnits.Select(su => CreateStorageUnitResponse(su)));
     }
 
     //Get StorageUnit by StorageUnitId
     [HttpGet("{id}")]
-    public async Task<ActionResult<StorageUnitContract>> GetStorageUnit(Guid id)
+    public async Task<ActionResult<StorageUnitResponse>> GetStorageUnit(Guid id)
     {
         var userId = GetCurrentUserId();
         var storageUnit = await _context.StorageUnits
@@ -81,22 +81,20 @@ public class StorageUnitController : ControllerBase
             return NotFound();
         }
 
-        return Ok(CreateStorageUnitContract(storageUnit));
+        return Ok(CreateStorageUnitResponse(storageUnit));
     }       
 
-    //Helper function for building StorageUnitContract from StorageUnit
-    private StorageUnitContract CreateStorageUnitContract(Domain.StorageUnit storageUnit)
-    {
-        return new StorageUnitContract
+ 
+    //Helper function to build StorageUnitResponse from StorageUnit
+    private StorageUnitResponse CreateStorageUnitResponse(Domain.StorageUnit storageUnit)
+    {        return new StorageUnitResponse
         {
+            Name = storageUnit.Name,
             StorageUnitId = storageUnit.Id,
-            CellarId = storageUnit.CellarId,
-            Name = storageUnit.Name
+            CellarId = storageUnit.CellarId
         };
     }
-
-
- 
+    
     //Helperfunction to get userId
     private Guid GetCurrentUserId()
     {

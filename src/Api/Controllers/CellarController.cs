@@ -57,7 +57,7 @@ public class CellarController : ControllerBase
         {
             return NotFound();
         }
-        return Ok(allUserCellars.Select(cellar => CreateCellarResponse(cellar)));
+        return Ok(allUserCellars.Select(c => CreateCellarResponse(c)));
     }
 
     [HttpGet("{id}")]

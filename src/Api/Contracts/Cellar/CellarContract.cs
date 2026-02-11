@@ -1,2 +1,5 @@
 namespace Api.Contracts.Cellar;
-public record CellarContract (Guid CellarId, Guid UserId);
+public class CellarContract : BaseContract
+{
+    
+}

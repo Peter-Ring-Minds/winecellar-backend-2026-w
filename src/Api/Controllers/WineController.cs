@@ -74,6 +74,17 @@ public class WineController : ControllerBase
         return Ok(CreateWineResponse(wine));
     }
 
+    //get wines by StorageUnitId
+    [HttpGet("by-storage-unit/{storageUnitId}")]
+    public async Task<ActionResult<List<WineResponse>>> GetWinesByStorageUnitId(Guid storageUnitId)
+    {
+        var userId = GetCurrentUserId();
+        var wines = await _context.Wines
+            .Where(w => w.StorageUnitId == storageUnitId && w.UserId == userId)
+            .ToListAsync();
+        return Ok(wines.Select(w => CreateWineResponse(w)));
+    }
+
 
 
     //Helper function for building WineResponse from Domain.Wine

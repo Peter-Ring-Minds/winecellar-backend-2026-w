@@ -58,7 +58,7 @@ public class StorageUnitController : ControllerBase
     }
 
     //Get StorageUnits by CellarId
-    [HttpGet("by-cellar-id/{cellarId}")]
+    [HttpGet("by-cellar/{cellarId}")]
     public async Task<ActionResult<List<StorageUnitResponse>>> GetStorageUnitsByCellar(Guid cellarId)
     {
         var userId = GetCurrentUserId();

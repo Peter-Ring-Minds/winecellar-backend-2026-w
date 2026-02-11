@@ -1,8 +1,8 @@
 namespace Api.Contracts.Wine;
 
-
-public class WineContract : BaseContract
+public class WineResponse : BaseContract
 {
+    public Guid Id { get; set; }
     public Guid StorageUnitId { get; set; }
     public string Wineyard { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;

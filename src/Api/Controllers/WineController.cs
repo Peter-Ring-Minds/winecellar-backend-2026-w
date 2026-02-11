@@ -32,8 +32,8 @@ public class WineController : ControllerBase
         var wine = new Domain.Wine
         {
             Id = Guid.NewGuid(),
-            StorageUnitId = request.StorageUnitId,
             Name = request.Name,
+            StorageUnitId = request.StorageUnitId,
             Wineyard = request.Wineyard,
             Type = request.Type,
             Vintage = request.Vintage,
@@ -46,22 +46,22 @@ public class WineController : ControllerBase
         return CreatedAtAction(
             nameof(GetWine),
             new { id = wine.Id },
-            CreateWineContract(wine));
+            CreateWineResponse(wine));
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<WineContract>>> GetWines()
+    public async Task<ActionResult<List<WineResponse>>> GetWines()
     {
         var userId = GetCurrentUserId();
         var wines = await _context.Wines
             .Where(w => w.UserId == userId)
             .ToListAsync();
 
-        return Ok(wines);
+        return Ok(wines.Select(w => CreateWineResponse(w)));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<WineContract>> GetWine(Guid id)
+    public async Task<ActionResult<WineResponse>> GetWine(Guid id)
     {
         var userId = GetCurrentUserId();
         var wine = await _context.Wines
@@ -71,17 +71,17 @@ public class WineController : ControllerBase
         {
             return NotFound("Wine not found for the current user.");
         }
-        return Ok(CreateWineContract(wine));
+        return Ok(CreateWineResponse(wine));
     }
 
 
 
-    //Helper function for building WineContract from Domain.Wine
-    private WineContract CreateWineContract(Domain.Wine wine)
+    //Helper function for building WineResponse from Domain.Wine
+    private WineResponse CreateWineResponse(Domain.Wine wine)
     {
-        return new WineContract
+        return new WineResponse
         {
-            WineId = wine.Id,
+            Id = wine.Id,
             StorageUnitId = wine.StorageUnitId ?? Guid.Empty,
             Name = wine.Name,
             Wineyard = wine.Wineyard,

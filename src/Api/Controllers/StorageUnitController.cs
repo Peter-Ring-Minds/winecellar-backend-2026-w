@@ -83,6 +83,51 @@ public class StorageUnitController : ControllerBase
 
         return Ok(CreateStorageUnitResponse(storageUnit));
     }       
+    // Put EndPoint to change name of storage unit. Maybe could also add functionality to move storage unit to another cellar by changing CellarId?
+    [HttpPut("{id}")]
+    public async Task<ActionResult<StorageUnitResponse>> UpdateStorageUnit(Guid id, StorageUnitContract request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest("Name is required.");
+        }
+
+        if (request.CellarId == Guid.Empty)
+        {
+            return BadRequest("CellarId is required.");
+        }
+
+        var trimmedName = request.Name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            return BadRequest("Name can not be longer than 30 characters.");
+        }
+
+        var userId = GetCurrentUserId();
+        var normalizedName = trimmedName.ToLowerInvariant();
+        var hasDuplicateName = await _context.StorageUnits
+            .Where(su => su.UserId == userId && su.CellarId == request.CellarId && su.Id != id)
+            .AnyAsync(su => su.Name.ToLower() == normalizedName);
+
+        if (hasDuplicateName)
+        {
+            return Conflict("A storage unit with this name already exists in the cellar.");
+        }
+
+        var storageUnit = await _context.StorageUnits
+            .Where(x => x.Id == id && x.UserId == userId && x.CellarId == request.CellarId)
+            .FirstOrDefaultAsync();
+
+        if (storageUnit is null)
+        {
+            return NotFound();
+        }
+
+        storageUnit.Name = trimmedName;
+        await _context.SaveChangesAsync();
+
+        return Ok(CreateStorageUnitResponse(storageUnit));
+    }
 
  
     //Helper function to build StorageUnitResponse from StorageUnit

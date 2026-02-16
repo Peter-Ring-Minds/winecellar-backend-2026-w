@@ -109,6 +109,14 @@ public class StorageUnitController : ControllerBase
         var trimmedName = request.Name.Trim();
 
         var userId = GetCurrentUserId();
+        var cellarExists = await _context.Cellars
+            .AnyAsync(c => c.Id == request.CellarId && c.UserId == userId);
+
+        if (!cellarExists)
+        {
+            return NotFound("Cellar not found.");
+        }
+
         var normalizedName = trimmedName.ToLowerInvariant();
         var hasDuplicateName = await _context.StorageUnits
             .Where(su => su.UserId == userId && su.CellarId == request.CellarId && su.Id != id)
@@ -125,13 +133,32 @@ public class StorageUnitController : ControllerBase
 
         if (storageUnit is null)
         {
-            return NotFound();
+            return NotFound("Storage unit not found in this cellar.");
         }
 
         storageUnit.Name = trimmedName;
         await _context.SaveChangesAsync();
 
         return Ok(CreateStorageUnitResponse(storageUnit));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteStorageUnit(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var storageUnit = await _context.StorageUnits
+            .Where(x => x.Id == id && x.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (storageUnit is null)
+        {
+            return NotFound("Storage unit not found.");
+        }
+
+        _context.StorageUnits.Remove(storageUnit);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 
  

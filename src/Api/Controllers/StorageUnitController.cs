@@ -142,30 +142,17 @@ public class StorageUnitController : ControllerBase
         return Ok(CreateStorageUnitResponse(storageUnit));
     }
 
-    [HttpDelete("{id}/by-cellar/{cellarId}")]
-    public async Task<IActionResult> DeleteStorageUnit(Guid id, Guid cellarId)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteStorageUnit(Guid id)
     {
-        if (cellarId == Guid.Empty)
-        {
-            return BadRequest("CellarId is required.");
-        }
-
         var userId = GetCurrentUserId();
-        var cellarExists = await _context.Cellars
-            .AnyAsync(c => c.Id == cellarId && c.UserId == userId);
-
-        if (!cellarExists)
-        {
-            return NotFound("Cellar not found.");
-        }
-
         var storageUnit = await _context.StorageUnits
-            .Where(x => x.Id == id && x.UserId == userId && x.CellarId == cellarId)
+            .Where(x => x.Id == id && x.UserId == userId)
             .FirstOrDefaultAsync();
 
         if (storageUnit is null)
         {
-            return NotFound("Storage unit not found in this cellar.");
+            return NotFound("Storage unit not found.");
         }
 
         _context.StorageUnits.Remove(storageUnit);

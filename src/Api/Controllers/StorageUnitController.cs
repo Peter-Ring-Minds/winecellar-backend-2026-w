@@ -28,9 +28,18 @@ public class StorageUnitController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<StorageUnitContract>> PostStorageUnit(StorageUnitContract request)
     {
+        var userId = GetCurrentUserId();
+        var hasDuplicateName = await _context.StorageUnits
+            .AnyAsync(su => su.UserId == userId && su.CellarId == request.CellarId && su.Name == request.Name);
+
+        if (hasDuplicateName)
+        {
+            return Conflict("A storage unit with this name already exists in the cellar.");
+        }
+
         var storageUnit = new Domain.StorageUnit
         {
-            UserId = GetCurrentUserId(),
+            UserId = userId,
             Id = Guid.NewGuid(),
             CellarId = request.CellarId,
             Name = request.Name

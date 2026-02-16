@@ -29,6 +29,11 @@ public class WineController : ControllerBase
     [HttpPost]
     public  async Task<ActionResult<WineContract>> PostWine(WineContract request)
     {
+        if (request.Quantity < 0)
+        {
+            return BadRequest("Quantity can not be less than 0.");
+        }
+
         var wine = new Domain.Wine
         {
             Id = Guid.NewGuid(),
@@ -37,6 +42,7 @@ public class WineController : ControllerBase
             Wineyard = request.Wineyard,
             Type = request.Type,
             Vintage = request.Vintage,
+            Quantity = request.Quantity,
             UserId = GetCurrentUserId()
         };
 
@@ -85,6 +91,39 @@ public class WineController : ControllerBase
         return Ok(wines.Select(w => CreateWineResponse(w)));
     }
 
+    [HttpPut("{id}")]
+    public async Task<ActionResult<WineResponse>> UpdateWine(Guid id, WineContract request)
+    {
+        if (request.Quantity < 0)
+        {
+            return BadRequest("Quantity can not be less than 0.");
+        }
+
+        if (request.StorageUnitId == Guid.Empty)
+        {
+            return BadRequest("StorageUnitId is required.");
+        }
+
+        var userId = GetCurrentUserId();
+        var wine = await _context.Wines
+            .Where(w => w.Id == id && w.UserId == userId && w.StorageUnitId == request.StorageUnitId)
+            .FirstOrDefaultAsync();
+
+        if (wine is null)
+        {
+            return NotFound("Wine not found in this storage unit.");
+        }
+
+        wine.Wineyard = request.Wineyard;
+        wine.Type = request.Type;
+        wine.Vintage = request.Vintage;
+        wine.Quantity = request.Quantity;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(CreateWineResponse(wine));
+    }
+
 
 
     //Helper function for building WineResponse from Domain.Wine
@@ -97,7 +136,8 @@ public class WineController : ControllerBase
             Name = wine.Name,
             Wineyard = wine.Wineyard,
             Type = wine.Type,
-            Vintage = wine.Vintage
+            Vintage = wine.Vintage,
+            Quantity = wine.Quantity
         };
     }
 

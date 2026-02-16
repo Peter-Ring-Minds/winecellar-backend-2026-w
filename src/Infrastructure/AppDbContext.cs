@@ -24,7 +24,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
             builder.Entity<Domain.StorageUnit>((entity) => 
             {
-                entity.Property(x => x.Name).HasMaxLength(30);
                 entity.HasOne(x => x.Cellar)
                     .WithMany(c => c.StorageUnits)
                     .HasForeignKey(x => x.CellarId)

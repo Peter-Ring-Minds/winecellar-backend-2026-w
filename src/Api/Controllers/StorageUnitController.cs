@@ -107,10 +107,6 @@ public class StorageUnitController : ControllerBase
         }
 
         var trimmedName = request.Name.Trim();
-        if (trimmedName.Length > 30)
-        {
-            return BadRequest("Name can not be longer than 30 characters.");
-        }
 
         var userId = GetCurrentUserId();
         var normalizedName = trimmedName.ToLowerInvariant();

@@ -124,6 +124,26 @@ public class WineController : ControllerBase
         return Ok(CreateWineResponse(wine));
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteWine(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var wine = await _context.Wines
+
+            .Where(x => x.Id == id && x.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (wine is null)
+        {
+            return NotFound("Wine not found.");
+        }
+
+        _context.Wines.Remove(wine);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
 
 
     //Helper function for building WineResponse from Domain.Wine

@@ -91,6 +91,49 @@ public class WineController : ControllerBase
         return Ok(wines.Select(w => CreateWineResponse(w)));
     }
 
+    [HttpPost("{id}/increment")]
+    public async Task<ActionResult<WineResponse>> IncrementWineQuantity(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var wine = await _context.Wines
+            .Where(w => w.Id == id && w.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (wine is null)
+        {
+            return NotFound("Wine not found.");
+        }
+
+        wine.Quantity += 1;
+        await _context.SaveChangesAsync();
+
+        return Ok(CreateWineResponse(wine));
+    }
+
+    [HttpPost("{id}/decrement")]
+    public async Task<ActionResult<WineResponse>> DecrementWineQuantity(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var wine = await _context.Wines
+            .Where(w => w.Id == id && w.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (wine is null)
+        {
+            return NotFound("Wine not found.");
+        }
+
+        if (wine.Quantity == 0)
+        {
+            return BadRequest("Quantity can not be less than 0.");
+        }
+
+        wine.Quantity -= 1;
+        await _context.SaveChangesAsync();
+
+        return Ok(CreateWineResponse(wine));
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<WineResponse>> UpdateWine(Guid id, WineContract request)
     {

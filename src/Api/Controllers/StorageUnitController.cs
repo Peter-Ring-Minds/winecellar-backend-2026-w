@@ -73,8 +73,17 @@ public class StorageUnitController : ControllerBase
         var userId = GetCurrentUserId();
         var storageUnits = await _context.StorageUnits
             .Where(su => su.CellarId == cellarId && su.UserId == userId)
+            .Select(su => new StorageUnitResponse
+            {
+                Name = su.Name,
+                StorageUnitId = su.Id,
+                CellarId = su.CellarId,
+                TotalWineQuantity = _context.Wines
+                    .Where(w => w.StorageUnitId == su.Id)
+                    .Sum(w => w.Quantity)
+            })
             .ToListAsync();
-        return Ok(storageUnits.Select(su => CreateStorageUnitResponse(su)));
+        return Ok(storageUnits);
     }
 
     //Get StorageUnit by StorageUnitId
@@ -168,7 +177,8 @@ public class StorageUnitController : ControllerBase
         {
             Name = storageUnit.Name,
             StorageUnitId = storageUnit.Id,
-            CellarId = storageUnit.CellarId
+            CellarId = storageUnit.CellarId,
+            TotalWineQuantity = 0
         };
     }
     

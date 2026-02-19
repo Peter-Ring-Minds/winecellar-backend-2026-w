@@ -491,6 +491,4 @@ $RECYCLE.BIN/
 mise.toml
 
 #Added .Net build folders to gitignore
-bin/
-obj/
 .vs/

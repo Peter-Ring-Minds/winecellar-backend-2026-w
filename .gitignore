@@ -20,24 +20,8 @@
 mono_crash.*
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
 
 # Ignore build output everywhere
-**/bin/
-**/obj/
 
 # Catch potential weird build folders from .NET 10 SDK on macOS
 **/[\\]Debug/
@@ -491,6 +475,19 @@ $RECYCLE.BIN/
 mise.toml
 
 #Added .Net build folders to gitignore
-bin/
-obj/
 .vs/
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/

@@ -5,8 +5,8 @@ WORKDIR /src
 # Copy everything into /src
 COPY . .
 
-# Optional: see structure
-RUN ls
+# Remove directories with literal backslashes in their names (Windows build artifacts)
+RUN find . -depth -name '*\\*' -exec rm -rf {} + 2>/dev/null || true
 
 # Restore using explicit project path
 RUN dotnet restore src/Api/Api.csproj

@@ -36,8 +36,6 @@ bld/
 [Ll]ogs/
 
 # Ignore build output everywhere
-**/bin/
-**/obj/
 
 # Catch potential weird build folders from .NET 10 SDK on macOS
 **/[\\]Debug/
